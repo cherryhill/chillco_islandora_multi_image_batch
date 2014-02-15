@@ -81,7 +81,6 @@ class ChillcoIslandoraMultiImageBatch extends IslandoraScanBatch {
         }
       }
     }
-    dpm($files);
     return $files;
   }
 
@@ -98,11 +97,17 @@ class ChillcoIslandoraMultiImageBatch extends IslandoraScanBatch {
     foreach ($files as $uri => &$file_object) {
       $file_object->ext = pathinfo($file_object->filename, PATHINFO_EXTENSION);
       $grouped[$file_object->name][$file_object->ext] = $file_object;
+      $groups[$file_object->name]['children'] = $this->get_container_images($file_object);
     }
 
     dpm($grouped);
     return array();
     return $grouped;
+  }
+
+  function get_container_children($file_object) {
+    $images = file_scan_directory($target_images, "/{$file_object->name}-.*/");
+    return $images;
   }
 }
 
