@@ -213,6 +213,12 @@ class ChillcoIslandoraMultiImageContainerBatchObject extends ChillcoIslandoraFla
     // Not ready until we've added the image items.
     return ISLANDORA_BATCH_STATE__NOT_READY;
   }
+  
+  public function batch_process() {
+    parent::batch_process();
+    module_load_include('inc', 'chillco_islandora_solution_pack_multi_image');
+    chillco_islandora_solution_pack_large_image_update_container_asset($this);
+  }
 
   public function get_children(IslandoraTuque $connection) {
     // Create page objects, return in an array.
@@ -263,10 +269,5 @@ class ChillcoIslandoraMultiImageItemBatchObject extends ChillcoIslandoraFlatBatc
     islandora_paged_content_set_relationship($rels_ext, FEDORA_RELS_EXT_URI, 'isMemberOf', $this->parent_id);
     // Add content model relationship.
     $this->models = 'islandora:chillco_isp_multi_image_item_cmodel';
-
-    if ($this->sequence_number == 1) {
-      $parent = islandora_object_load($this->parent_id);
-      chillco_islandora_solution_pack_large_image_update_container_asset($parent);
-    }
   }
 }
