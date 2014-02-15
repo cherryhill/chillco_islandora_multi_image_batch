@@ -219,7 +219,7 @@ class ChillcoIslandoraMultiImageContainerBatchObject extends ChillcoIslandoraFla
     $children = array();
 
     $sequence = 0;
-    foreach ($this->object_info as $filepath => $info) {
+    foreach ($this->object_info['children'] as $filepath => $info) {
       $sequence++;
       $object = array();
       $file_info = pathinfo($filepath);
