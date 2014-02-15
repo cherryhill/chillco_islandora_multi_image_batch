@@ -107,6 +107,7 @@ class ChillcoIslandoraMultiImageBatch extends IslandoraScanBatch {
 
   function get_container_images($file_object) {
     $images = file_scan_directory($this->get_target_images(), "/{$file_object->name}-.*/");
+    ksort($images);
     return $images;
   }
 }
