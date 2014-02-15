@@ -252,6 +252,8 @@ class ChillcoIslandoraMultiImageItemBatchObject extends ChillcoIslandoraFlatBatc
 
   public function add_relationships() {
     module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+    module_load_include('inc', 'chillco_islandora_solution_pack_multi_image');
+
     // Add relationship to collection.
     $rels_ext = $this->relationships;
     islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isPageOf', $this->parent_id);
@@ -261,5 +263,10 @@ class ChillcoIslandoraMultiImageItemBatchObject extends ChillcoIslandoraFlatBatc
     islandora_paged_content_set_relationship($rels_ext, FEDORA_RELS_EXT_URI, 'isMemberOf', $this->parent_id);
     // Add content model relationship.
     $this->models = 'islandora:chillco_isp_multi_image_item_cmodel';
+
+    if ($this->sequence_number == 1) {
+      $parent = islandora_object_load($this->parent_id);
+      chillco_islandora_solution_pack_large_image_update_container_asset($parent);
+    }
   }
 }
