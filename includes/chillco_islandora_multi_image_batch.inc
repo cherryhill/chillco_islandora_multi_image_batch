@@ -92,16 +92,12 @@ class ChillcoIslandoraMultiImageBatch extends IslandoraScanBatch {
   protected function group_files($files) {
     $grouped = array();
 
-    // TODO: Group according to basename, to and hand-off each group to object
-    // wrappers.
     foreach ($files as $uri => &$file_object) {
       $file_object->ext = pathinfo($file_object->filename, PATHINFO_EXTENSION);
       $grouped[$file_object->name][$file_object->ext] = $file_object;
       $grouped[$file_object->name]['children'] = $this->get_container_images($file_object);
     }
 
-    dpm($grouped);
-    return array();
     return $grouped;
   }
 
@@ -158,6 +154,7 @@ class ChillcoIslandoraFlatBatchObject extends IslandoraScanBatchObject {
   <titleInfo>
     <title>$title</title>
   </titleInfo>
+  <identifier type="resourceID">$title</identifier>
 </mods>
 EOXML;
       }
@@ -170,7 +167,7 @@ EOXML;
 class ChillcoIslandoraMultiImageContainerBatchObject extends ChillcoIslandoraFlatBatchObject {
 
   /**
-   * Constructor for the IslandoraScanBatchObject.
+   * Constructor for the ChillcoIslandoraMultiImageContainerBatchObject.
    */
   public function __construct(IslandoraTuque $connection, $base_name, $object_info, $preprocessor_parameters) {
     IslandoraBatchObject::__construct(NULL, $connection->repository);
@@ -179,6 +176,27 @@ class ChillcoIslandoraMultiImageContainerBatchObject extends ChillcoIslandoraFla
     $this->object_info = $object_info;
     $this->resources = array();
     $this->preprocessor_parameters = $preprocessor_parameters;
+  }
+
+  public function initial_batch_state() {
+    // Not ready until we've added the image items.
+    return ISLANDORA_BATCH_STATE__NOT_READY;
+  }
+
+  public function get_children(IslandoraTuque $connection) {
+    // Create page objects, return in an array.
+    $children = array();
+
+    $sequence = 0;
+    foreach ($this->object_info as $filepath => $info) {
+      $sequence++;
+      $object = array();
+      $file_info = pathinfo($filepath);
+      $object[$filepath['extension']] = $info;
+      $children[] = new ChillcoIslandoraMultiImageItemBatchObject($connection, $this->id, $sequence, $object, $this->preprocessor_parameters);
+    }
+
+    return $children;
   }
 }
 
