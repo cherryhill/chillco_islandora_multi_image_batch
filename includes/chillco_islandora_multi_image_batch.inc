@@ -214,12 +214,6 @@ class ChillcoIslandoraMultiImageContainerBatchObject extends ChillcoIslandoraFla
     return ISLANDORA_BATCH_STATE__NOT_READY;
   }
   
-  public function batch_process() {
-    parent::batch_process();
-    module_load_include('inc', 'chillco_islandora_solution_pack_multi_image');
-    chillco_islandora_solution_pack_large_image_update_container_asset($this);
-  }
-
   public function get_children(IslandoraTuque $connection) {
     // Create page objects, return in an array.
     $children = array();
@@ -233,7 +227,6 @@ class ChillcoIslandoraMultiImageContainerBatchObject extends ChillcoIslandoraFla
       $children[] = new ChillcoIslandoraMultiImageItemBatchObject($connection, $this->id, $sequence, $object, $this->preprocessor_parameters);
     }
 
-    dpm($children);
     return $children;
   }
 }
