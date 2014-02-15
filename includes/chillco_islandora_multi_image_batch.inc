@@ -106,6 +106,37 @@ class ChillcoIslandoraMultiImageBatch extends IslandoraScanBatch {
     ksort($images);
     return $images;
   }
+
+  public function preprocess() {
+    $added = parent::preprocess();
+
+    $object_type = static::get_object_class();
+
+    foreach ($added as $object) {
+      if ($object instanceof $object_type) {
+        $children = db_select('islandora_batch_queue', 'q')
+          ->fields('q', array('id'))
+          ->condition('parent', $object->id);
+
+        // Set pages ready to go.
+        db_update('islandora_batch_state')
+          ->fields(array(
+            'state' => ISLANDORA_BATCH_STATE__READY,
+          ))
+          ->condition('id', $children, 'IN')
+          ->execute();
+        // Set book ready to go (after children, that is).
+        db_update('islandora_batch_state')
+          ->fields(array(
+            'state' => ISLANDORA_BATCH_STATE__PENDING_CHILDREN,
+          ))
+          ->condition('id', $object->id)
+          ->execute();
+      }
+    }
+
+    return $added;
+  }
 }
 
 /**
@@ -196,6 +227,7 @@ class ChillcoIslandoraMultiImageContainerBatchObject extends ChillcoIslandoraFla
       $children[] = new ChillcoIslandoraMultiImageItemBatchObject($connection, $this->id, $sequence, $object, $this->preprocessor_parameters);
     }
 
+    dpm($children);
     return $children;
   }
 }
