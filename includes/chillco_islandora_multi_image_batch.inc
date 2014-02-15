@@ -3,6 +3,12 @@
 /**
  * @file
  * Implementation of classes from the batch ingest framework for books.
+ *
+ * Image Container Content Model
+ * $multi_image_container_content_model = $connection->repository->constructObject('islandora:chillco_isp_multi_image_container_cmodel');
+ *
+ * Image Item Content Model.
+ * $multi_image_item_content_model = $connection->repository->constructObject('islandora:chillco_isp_multi_image_item_cmodel');
  */
 
 /**
@@ -16,7 +22,7 @@ class ChillcoIslandoraMultiImageBatch extends IslandoraScanBatch {
    * @overrides IslandoraScanBatch::get_object_class()
    */
   protected static function get_object_class() {
-    return 'ChillcoIslandoraLargeImageBatchObject';
+    return 'ChillcoIslandoraMultiImageContainerBatchObject';
   }
   
   /**
@@ -62,20 +68,20 @@ class ChillcoIslandoraMultiImageBatch extends IslandoraScanBatch {
     );
     $replacements = array(
       $target_images,
-      '.jpg',
+      '-01.jpg',
     );
 
-    $images = file_scan_directory($target_images, $this->get_pattern());
-    foreach (file_scan_directory($target, $this->get_pattern()) as $uri => $value) {
+    $images = file_scan_directory($target_images, '/.*-01.*/');
+    foreach (file_scan_directory($target, '/.*.xml$/') as $uri => $value) {
       if (strpos($uri, '.xml') !== FALSE) {
         // Only process xml if there is a matching image to go with it.
         $matching_image = str_replace($patterns, $replacements, $value->uri);
         if (!empty($images[$matching_image])) {
           $files[substr($uri, $target_length)] = $value;
-          $files[substr($matching_image, $target_length)] = $images[$matching_image];
         }
       }
     }
+    dpm($files);
     return $files;
   }
 
@@ -94,24 +100,16 @@ class ChillcoIslandoraMultiImageBatch extends IslandoraScanBatch {
       $grouped[$file_object->name][$file_object->ext] = $file_object;
     }
 
+    dpm($grouped);
+    return array();
     return $grouped;
   }
 }
 
-class ChillcoIslandoraLargeImageBatchObject extends IslandoraScanBatchObject {
-
-  /**
-   * Constructor for the IslandoraScanBatchObject.
-   */
-  public function __construct(IslandoraTuque $connection, $base_name, $object_info, $preprocessor_parameters) {
-    IslandoraBatchObject::__construct(NULL, $connection->repository);
-
-    $this->base_name = $base_name;
-    $this->object_info = $object_info;
-    $this->resources = array();
-    $this->preprocessor_parameters = $preprocessor_parameters;
-  }
-
+/**
+ * Flat batch object for processing.
+ */
+class ChillcoIslandoraFlatBatchObject extends IslandoraScanBatchObject {
   /**
    * Function batch_process.
    *
@@ -160,5 +158,52 @@ EOXML;
       $this->ingestDatastream($mods_datastream);
     }
     return $this['MODS']->content;
+  }
+}
+
+class ChillcoIslandoraMultiImageContainerBatchObject extends ChillcoIslandoraFlatBatchObject {
+
+  /**
+   * Constructor for the IslandoraScanBatchObject.
+   */
+  public function __construct(IslandoraTuque $connection, $base_name, $object_info, $preprocessor_parameters) {
+    IslandoraBatchObject::__construct(NULL, $connection->repository);
+
+    $this->base_name = $base_name;
+    $this->object_info = $object_info;
+    $this->resources = array();
+    $this->preprocessor_parameters = $preprocessor_parameters;
+  }
+}
+
+class ChillcoIslandoraMultiImageItemBatchObject extends ChillcoIslandoraFlatBatchObject {
+  protected $parent_id, $sequence_number;
+
+  public function __construct(IslandoraTuque $connection, $parent_id, $sequence, $object_info, $pp) {
+    parent::__construct($connection, "$parent_id-$sequence", $object_info, $pp);
+
+    $this->parent_id = $parent_id;
+    $this->sequence_number = $sequence;
+  }
+
+  public function get_children(IslandoraTuque $connection) {
+    return array();
+  }
+
+  public function initial_batch_state() {
+    return ISLANDORA_BATCH_STATE__NOT_READY;
+  }
+
+  public function add_relationships() {
+    module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+    // Add relationship to collection.
+    $rels_ext = $this->relationships;
+    islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isPageOf', $this->parent_id);
+    islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isSequenceNumber', (string) $this->sequence_number, TRUE);
+    islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isPageNumber', (string) $this->sequence_number, TRUE);
+    islandora_paged_content_set_relationship($rels_ext, ISLANDORA_RELS_EXT_URI, 'isSection', '1', TRUE);
+    islandora_paged_content_set_relationship($rels_ext, FEDORA_RELS_EXT_URI, 'isMemberOf', $this->parent_id);
+    // Add content model relationship.
+    $this->models = 'islandora:chillco_isp_multi_image_item_cmodel';
   }
 }

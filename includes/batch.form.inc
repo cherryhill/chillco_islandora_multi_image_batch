@@ -18,14 +18,6 @@ function chillco_islandora_multi_image_batch_form($form, &$form_state, AbstractO
     '#size' => 15
   );
 
-  $form['email_admin'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Notify admin after ingest?'),
-    '#description' => t('Whether or not we should notify the site admin that ' .
-        'a large image has been ingested after the ingest of the large image completes ' .
-        '(requires relevant "Rules" rule).'),
-  );
-
   $form['ingest_set_immediately'] = array(
     '#type' => 'checkbox',
     '#title' => t('Ingest immediately?'),
@@ -69,7 +61,7 @@ function chillco_islandora_multi_image_batch_form_submit($form, &$form_state) {
     'parent_relationship_pred' => 'isMemberOfCollection',
     'wait_for_metadata' => FALSE,
     'directory_dedup' => FALSE,
-    'content_models' => array('islandora:chillco_isp_multi_image_cmodel'),
+    'content_models' => array('islandora:chillco_isp_multi_image_container_cmodel'),
   );
 
   $preprocessor = new ChillcoIslandoraMultiImageBatch($connection, $parameters);
