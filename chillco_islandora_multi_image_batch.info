@@ -1,0 +1,8 @@
+name = "Chillco Islandora Multi Image Batch"
+description = "Batch process records and their collection of images"
+core = 7.x
+package = Chillco
+dependencies[] = islandora_batch
+dependencies[] = chillco_dpldams_xmlparser
+dependencies[] = chillco_islandora_solution_pack_multi_image
+files[] = includes/chillco_islandora_multi_image_batch.inc

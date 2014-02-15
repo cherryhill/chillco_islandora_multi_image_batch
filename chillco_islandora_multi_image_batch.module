@@ -1,0 +1,38 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+function chillco_islandora_multi_image_batch_menu() {
+  $items = array();
+
+  $items['islandora/object/%islandora_object/manage/collection/multi_image_batch'] = array(
+    'title' => 'Multi-Image Container Batch',
+    'access callback' => 'chillco_islandora_multi_image_batch_menu_access',
+    'access arguments' => array(2),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('chillco_islandora_multi_image_batch_form', 2),
+    'file' => 'includes/batch.form.inc',
+    'type' => MENU_LOCAL_ACTION,
+  );
+
+  return $items;
+}
+
+/**
+ * Menu access callback.
+ */
+function chillco_islandora_multi_image_batch_menu_access($object) {
+  if (!islandora_object_access(FEDORA_INGEST, $object)) {
+    return FALSE;
+  }
+
+  $c = 'COLLECTION_POLICY';
+  if (isset($object[$c]) && islandora_datastream_access(FEDORA_VIEW_OBJECTS, $object[$c])) {
+    $cp = new CollectionPolicy($object[$c]->content);
+
+    return array_key_exists('islandora:chillco_isp_multi_image_cmodel', $cp->getContentModels());
+  }
+
+  return FALSE;
+}
