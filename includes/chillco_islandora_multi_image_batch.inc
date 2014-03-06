@@ -208,6 +208,16 @@ class ChillcoIslandoraFlatBatchObject extends IslandoraScanBatchObject {
       }
       else {
         $title = $this->base_name;
+        $ds = NULL;
+        if (!empty($this->object_info['tif'])) {
+          $ds = 'tif';
+        }
+        else if (!empty($this->object_info['jpg'])) {
+          $ds = 'tif';
+        }
+        if (!empty($ds)) {
+          $title = basename($this->object_info[$ds]->filename);
+        }
         $mods_datastream->content = <<<EOXML
 <mods xmlns:mods="http://www.loc.gov/mods/v3" xmlns="http://www.loc.gov/mods/v3">
   <titleInfo>
